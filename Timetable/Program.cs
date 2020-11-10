@@ -33,6 +33,7 @@ namespace Timetable
         static void GetFile(out string path)
         {
             path = default;
+            string day = (Convert.ToInt32(GetDate()[0]) + 1).ToString();
             Dictionary<string, bool> formats = new Dictionary<string, bool>()
             {
                 [".xls"] = true,
@@ -44,7 +45,7 @@ namespace Timetable
             {
                 WebClient wc = new WebClient();
                 wc.DownloadFile(
-                    $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{GetDate()[0]}%20{months[GetDate()[1]]}%20{GetDate()[2]}.xls?attredirects=0&d=1",
+                    $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{day}%20{months[GetDate()[1]]}%20{GetDate()[2]}.xls?attredirects=0&d=1",
                     $"C:\\Users\\user\\Downloads\\Расписание на {GetDate()[0]} {months[GetDate()[1]]}.xls"
                     );
             }
@@ -56,7 +57,7 @@ namespace Timetable
             {
                 WebClient wc = new WebClient();
                 wc.DownloadFile(
-                    $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{GetDate()[0]}%20{months[GetDate()[1]]}%20{GetDate()[2]}.xlsx?attredirects=0&d=1",
+                    $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{day}%20{months[GetDate()[1]]}%20{GetDate()[2]}.xlsx?attredirects=0&d=1",
                     $"C:\\Users\\user\\Downloads\\Расписание на {GetDate()[0]} {months[GetDate()[1]]}.xlsx"
                     );
             }
@@ -68,7 +69,7 @@ namespace Timetable
             {
                 WebClient wc = new WebClient();
                 wc.DownloadFile(
-                    $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{GetDate()[0]}%20{months[GetDate()[1]]}%20{GetDate()[2]}.pdf?attredirects=0&d=1",
+                    $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{day}%20{months[GetDate()[1]]}%20{GetDate()[2]}.pdf?attredirects=0&d=1",
                     $"C:\\Users\\user\\Downloads\\Расписание на {GetDate()[0]} {months[GetDate()[1]]}.pdf"
                     );
             }
@@ -84,11 +85,10 @@ namespace Timetable
             }
         }
 
-        static void GetTimetable(in string path)
+        static void Timetable(in string path)
         {
-            if ((path != default) || (path != null))
-            {
-                
+            try 
+            {                
                 if (path.Substring(path.Length - 4) == ".xls")
                 {
                     HSSFWorkbook wb = default;
@@ -99,13 +99,13 @@ namespace Timetable
                             wb = new HSSFWorkbook(file);
                         }
                         ISheet sheet = wb.GetSheetAt(0);
-                        int i = 1;
-                        var cell = sheet.GetRow(i);
-                        Console.WriteLine(cell.GetCell(0).StringCellValue);
-                        //while ((cell != null) && (cell.GetCell(0).StringCellValue != ""))
-                        //{
-                        //   
-                        //}
+
+                        for (int i = 16; i < 16 + 14; i++)
+                        {
+                            var cell = sheet.GetRow(i);
+                            if (i % 2 != 0)
+                                Console.WriteLine($"{(i - 15) / 2}. {cell.GetCell(21).ToString()}");
+                        }
                     }
                     finally
                     {
@@ -129,9 +129,6 @@ namespace Timetable
                             if(i%2 != 0)
                                 Console.WriteLine($"{(i - 15)/2}. {cell.GetCell(21).ToString()}");
                         }
-                        //{
-                        //   
-                        //}
                     }
                     finally
                     {
@@ -139,13 +136,16 @@ namespace Timetable
                     }
                 }
             }
-            else { Console.WriteLine("Path is empty"); }
+            catch (Exception) 
+            {
+                Console.WriteLine("Path is empty");
+            }
         }
 
         static void Main(string[] args)
         {
             GetFile(path: out path);
-            GetTimetable(path: in path);
+            Timetable(path: in path);
         }
     }
 }
