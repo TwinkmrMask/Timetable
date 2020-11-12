@@ -5,147 +5,120 @@ using NPOI.SS.UserModel;
 using NPOI.HSSF.UserModel;
 using NPOI.XSSF.UserModel;
 using System.IO;
+using System.Globalization;
+using System.Linq;
 
 namespace Timetable
 {
     class Program
     {
-        private static string path = default;
+        private static byte[] file;
+        private static string fileFormat;
         private static Dictionary<int, string> couples = new Dictionary<int, string>();
-        private static Dictionary<string, string> months = new Dictionary<string, string>()
+      
+        static string[] GetDate()
         {
-            ["01"] = "января",
-            ["02"] = "февраля",
-            ["03"] = "марта",
-            ["04"] = "апреля",
-            ["05"] = "мая",
-            ["06"] = "июня",
-            ["07"] = "июля",
-            ["08"] = "августа",
-            ["09"] = "сентября",
-            ["10"] = "октября",
-            ["11"] = "ноября",
-            ["12"] = "декабря"
-        };
+            string[] date = DateTime.Today.ToString("d.MM.yyyy").Split('.');
+            var ru = CultureInfo.GetCultureInfo("ru-RU");
+            date[0] = (int.Parse(date[0]) + 1).ToString();
+            date[1] = ru.DateTimeFormat.MonthGenitiveNames[int.Parse(date[1]) - 1];
+            return date;
+        }
 
-        static string[] GetDate() => DateTime.Today.ToString("d.MM.yyyy").Split('.');
-
-        static void GetFile(out string path)
+        static void GetFile(out byte[] file, out string fileFormat)
         {
-            path = default;
-            string day = (Convert.ToInt32(GetDate()[0]) + 1).ToString();
-            Dictionary<string, bool> formats = new Dictionary<string, bool>()
+            file = default;
+            fileFormat = default;
+            string[] date = GetDate();
+            List<string> formats = new List<string>()
             {
-                [".xls"] = true,
-                [".xlsx"] = true,
-                [".pdf"] = true
+                ".xls",  
+                ".xlsx", 
+                ".pdf"
             };
-
-            try
+            foreach (string format in formats) 
             {
-                WebClient wc = new WebClient();
-                wc.DownloadFile(
-                    $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{day}%20{months[GetDate()[1]]}%20{GetDate()[2]}.xls?attredirects=0&d=1",
-                    $"C:\\Users\\user\\Downloads\\Расписание на {GetDate()[0]} {months[GetDate()[1]]}.xls"
-                    );
-            }
-            catch (Exception)
-            {
-                formats[".xls"] = false;
-            }
-            try
-            {
-                WebClient wc = new WebClient();
-                wc.DownloadFile(
-                    $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{day}%20{months[GetDate()[1]]}%20{GetDate()[2]}.xlsx?attredirects=0&d=1",
-                    $"C:\\Users\\user\\Downloads\\Расписание на {GetDate()[0]} {months[GetDate()[1]]}.xlsx"
-                    );
-            }
-            catch (Exception)
-            {
-                formats[".xlsx"] = false;
-            }
-            try
-            {
-                WebClient wc = new WebClient();
-                wc.DownloadFile(
-                    $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{day}%20{months[GetDate()[1]]}%20{GetDate()[2]}.pdf?attredirects=0&d=1",
-                    $"C:\\Users\\user\\Downloads\\Расписание на {GetDate()[0]} {months[GetDate()[1]]}.pdf"
-                    );
-            }
-            catch (Exception)
-            {
-                formats[".pdf"] = false;
-            }
-
-            foreach (string format in formats.Keys)
-            {
-                if (formats[format] == true)
-                    path = $"C:\\Users\\user\\Downloads\\Расписание на {GetDate()[0]} {months[GetDate()[1]]}{format}";
+                string domain = $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{date[0]}%20{date[1]}%20{GetDate()[2]}{format}?attredirects=0&d=1";
+                try
+                {
+                    WebClient wc = new WebClient();
+                    file = wc.DownloadData(domain);
+                    fileFormat = format;
+                    break;
+                }
+                finally
+                {
+                    file = default;
+                    fileFormat = default;
+                }
             }
         }
 
-        static void Timetable(in string path)
+        static void Timetable(in byte[] file, in string fileFormat)
         {
-            try 
-            {                
-                if (path.Substring(path.Length - 4) == ".xls")
-                {
-                    HSSFWorkbook wb = default;
-                    try
-                    {
-                        using (FileStream file = new FileStream(path, FileMode.Open, FileAccess.Read))
-                        {
-                            wb = new HSSFWorkbook(file);
-                        }
-                        ISheet sheet = wb.GetSheetAt(0);
-
-                        for (int i = 16; i < 16 + 14; i++)
-                        {
-                            var cell = sheet.GetRow(i);
-                            if (i % 2 != 0)
-                                Console.WriteLine($"{(i - 15) / 2}. {cell.GetCell(21).ToString()}");
-                        }
-                    }
-                    finally
-                    {
-                        wb.Close();
-                    }
-                }
-                if (path.Substring(path.Length - 4) == "xlsx")
-                {
-                    XSSFWorkbook wb = default;
-                    try
-                    {
-                        using (FileStream file = new FileStream(path, FileMode.Open, FileAccess.Read))
-                        {
-                            wb = new XSSFWorkbook(file);
-                        }
-                        ISheet sheet = wb.GetSheetAt(0);
-
-                        for (int i = 16; i < 16 + 14; i++)
-                        {
-                            var cell = sheet.GetRow(i);
-                            if(i%2 != 0)
-                                Console.WriteLine($"{(i - 15)/2}. {cell.GetCell(21).ToString()}");
-                        }
-                    }
-                    finally
-                    {
-                        wb.Close();                        
-                    }
-                }
-            }
-            catch (Exception) 
+            if ((file != null) || (file != default))
             {
-                Console.WriteLine("Path is empty");
+                dynamic wb = null;
+                try
+                {
+                    if (fileFormat != ".pdf")
+                    {
+                        using (MemoryStream timetable = new MemoryStream(file))
+                        {
+                            if (fileFormat == ".xls")
+                                wb = new HSSFWorkbook(timetable);
+
+                            if (fileFormat == ".xlsx")
+                            {
+                                wb = new XSSFWorkbook(timetable);
+
+                                ISheet sheet = wb.GetSheetAt(0);
+
+                                for (int i = 16; i < 16 + 14; i++)
+                                {
+                                    var cell = sheet.GetRow(i);
+                                    if (i % 2 != 0)
+                                        couples.Add((i - 15) / 2, cell.GetCell(21).ToString().Replace("\n", " ").Trim());
+                                }
+
+                                if (couples.Values.Any(v => !string.IsNullOrWhiteSpace(v))) 
+                                    foreach (KeyValuePair<int, string> _couples in couples)
+                                    {
+                                        Console.Write(_couples.Key + ".");
+                                        Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                                        Console.WriteLine(_couples.Value);
+                                }
+                                else
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Green;
+                                    Console.WriteLine("\n      День\n Самостоятельной\n     Работы");
+                                    Console.ResetColor();
+                                }
+                                
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Oops, i don't know how to handle this format yet");
+                    }
+                }
+                finally
+                {
+                    wb.Close();
+                }
             }
-        }
+            else
+            {
+                Console.WriteLine("File is empty");
+            }
+        }    
 
         static void Main(string[] args)
         {
-            GetFile(path: out path);
-            Timetable(path: in path);
+            GetFile(file: out file, fileFormat: out fileFormat);
+            Timetable(file: in file, fileFormat: in fileFormat);
+            Console.ReadKey(true);
         }
     }
 }
