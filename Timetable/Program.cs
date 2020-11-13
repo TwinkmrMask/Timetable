@@ -15,7 +15,7 @@ namespace Timetable
         private static byte[] file;
         private static string fileFormat;
         private static Dictionary<int, string> couples = new Dictionary<int, string>();
-      
+
         static string[] GetDate()
         {
             string[] date = DateTime.Today.ToString("d.MM.yyyy").Split('.');
@@ -30,13 +30,8 @@ namespace Timetable
             file = default;
             fileFormat = default;
             string[] date = GetDate();
-            List<string> formats = new List<string>()
-            {
-                ".xls",  
-                ".xlsx", 
-                ".pdf"
-            };
-            foreach (string format in formats) 
+            List<string> formats = new List<string>() { ".xls", ".xlsx", ".pdf" };
+            foreach (string format in formats)
             {
                 string domain = $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{date[0]}%20{date[1]}%20{GetDate()[2]}{format}?attredirects=0&d=1";
                 try
@@ -46,7 +41,7 @@ namespace Timetable
                     fileFormat = format;
                     break;
                 }
-                finally
+                catch
                 {
                     file = default;
                     fileFormat = default;
@@ -58,7 +53,7 @@ namespace Timetable
         {
             if ((file != null) || (file != default))
             {
-                dynamic wb = null;
+                IWorkbook wb = null;
                 try
                 {
                     if (fileFormat != ".pdf")
@@ -69,32 +64,37 @@ namespace Timetable
                                 wb = new HSSFWorkbook(timetable);
 
                             if (fileFormat == ".xlsx")
-                            {
+
                                 wb = new XSSFWorkbook(timetable);
 
-                                ISheet sheet = wb.GetSheetAt(0);
+                            ISheet sheet = wb.GetSheetAt(0);
 
-                                for (int i = 16; i < 16 + 14; i++)
+                            for (int i = 16; i < 16 + 14; i++)
+                            {
+                                var cell = sheet.GetRow(i);
+                                if (i % 2 != 0)
+                                    couples.Add((i - 15) / 2, cell.GetCell(21).ToString().Replace("\n", " ").Trim());
+                            }
+
+                            if (couples.Values.Any(v => !string.IsNullOrWhiteSpace(v)))
+                            {
+                                using (DataBase data = new DataBase())
                                 {
-                                    var cell = sheet.GetRow(i);
-                                    if (i % 2 != 0)
-                                        couples.Add((i - 15) / 2, cell.GetCell(21).ToString().Replace("\n", " ").Trim());
-                                }
-
-                                if (couples.Values.Any(v => !string.IsNullOrWhiteSpace(v))) 
+                                    string[] date = GetDate();
                                     foreach (KeyValuePair<int, string> _couples in couples)
                                     {
                                         Console.Write(_couples.Key + ".");
                                         Console.ForegroundColor = ConsoleColor.DarkMagenta;
                                         Console.WriteLine(_couples.Value);
+                                        //data.Create(date[0]);
+                                    }
                                 }
-                                else
-                                {
-                                    Console.ForegroundColor = ConsoleColor.Green;
-                                    Console.WriteLine("\n      День\n Самостоятельной\n     Работы");
-                                    Console.ResetColor();
-                                }
-                                
+                            }
+                            else
+                            {
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("\n      День\n Самостоятельной\n     Работы");
+                                Console.ResetColor();
                             }
                         }
                     }
@@ -112,7 +112,7 @@ namespace Timetable
             {
                 Console.WriteLine("File is empty");
             }
-        }    
+        }
 
         static void Main(string[] args)
         {
@@ -120,5 +120,25 @@ namespace Timetable
             Timetable(file: in file, fileFormat: in fileFormat);
             Console.ReadKey(true);
         }
+    }
+    class Options
+    {
+        /*
+        private string[] LessonParse(string line)
+        {
+
+        }
+        public void AddLinks(string teacher, string link) 
+        {
+            using(DataBase database = new DataBase())
+            {
+                database.AddLinks(teacher, link);
+            }
+        }
+        public void AddLessons(string leasson, string date)
+        {
+
+        }
+        */
     }
 }
