@@ -83,7 +83,7 @@ namespace Timetable
             var codeLink = ConvertToSequence(code);
 
             return this.links.GetOrCreate(
-                this.links.GetOrCreate(this.links.GetOrCreate(dateLink, lessonLink), codeLink), 
+                this.links.GetOrCreate(this.links.GetOrCreate(dateLink, lessonLink), codeLink),
                 this.links.GetOrCreate(teacherLink, linToZoomkLink)
                 );
         }
@@ -117,3 +117,4 @@ namespace Timetable
         */
 
     }
+}

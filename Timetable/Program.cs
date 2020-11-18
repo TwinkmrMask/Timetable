@@ -10,30 +10,37 @@ using System.Linq;
 
 namespace Timetable
 {
-    class Program
+    class Program // The processing logic schedules
     {
         private static byte[] file;
         private static string fileFormat;
+        private static string[] day;
         private static Dictionary<int, string> couples = new Dictionary<int, string>();
-
-        static string[] GetDate()
+        static string[] GetDate(dynamic date)
         {
-            string[] date = DateTime.Today.ToString("d.MM.yyyy").Split('.');
-            var ru = CultureInfo.GetCultureInfo("ru-RU");
-            date[0] = (int.Parse(date[0]) + 1).ToString();
-            date[1] = ru.DateTimeFormat.MonthGenitiveNames[int.Parse(date[1]) - 1];
-            return date;
-        }
+            day = DateTime.Today.ToString("d.MM.yyyy").Split('.');
 
-        static void GetFile(out byte[] file, out string fileFormat)
+            var ru = CultureInfo.GetCultureInfo("ru-RU");
+
+            if (date == "tomorrow")
+                day[0] = (int.Parse(day[0]) + 1).ToString(); 
+            else
+                day = date.Split('.');
+
+            day[1] = ru.DateTimeFormat.MonthGenitiveNames[int.Parse(day[1]) - 1];
+            Console.WriteLine($"Today is {day[0]}.{day[1]}.{day[2]}");
+            return day;
+
+        }
+        static void GetFile(out byte[] file, out string fileFormat, string day)
         {
             file = default;
             fileFormat = default;
-            string[] date = GetDate();
+            string[] date = GetDate(day);
             List<string> formats = new List<string>() { ".xls", ".xlsx", ".pdf" };
             foreach (string format in formats)
             {
-                string domain = $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{date[0]}%20{date[1]}%20{GetDate()[2]}{format}?attredirects=0&d=1";
+                string domain = $"http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20{date[0]}%20{date[1]}%20{date[2]}{format}?attredirects=0&d=1";
                 try
                 {
                     WebClient wc = new WebClient();
@@ -46,9 +53,13 @@ namespace Timetable
                     file = default;
                     fileFormat = default;
                 }
+                if (file == default)
+                {
+                    Console.WriteLine("There is no schedule for tomorrow yet, but there is one for today");
+                    GetFile(out file, out fileFormat, "today");
+                }
             }
         }
-
         static void Timetable(in byte[] file, in string fileFormat)
         {
             if ((file != null) || (file != default))
@@ -64,7 +75,6 @@ namespace Timetable
                                 wb = new HSSFWorkbook(timetable);
 
                             if (fileFormat == ".xlsx")
-
                                 wb = new XSSFWorkbook(timetable);
 
                             ISheet sheet = wb.GetSheetAt(0);
@@ -80,13 +90,13 @@ namespace Timetable
                             {
                                 using (DataBase data = new DataBase())
                                 {
-                                    string[] date = GetDate();
+                                    string[] date = GetDate("tomorrow");
                                     foreach (KeyValuePair<int, string> _couples in couples)
                                     {
-                                        Console.Write(_couples.Key + ".");
-                                        Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                                        Console.Write(_couples.Key + ". ");
+                                        Console.ForegroundColor = ConsoleColor.Cyan;
                                         Console.WriteLine(_couples.Value);
-                                        //data.Create(date[0]);
+                                        Console.ResetColor();
                                     }
                                 }
                             }
@@ -113,21 +123,26 @@ namespace Timetable
                 Console.WriteLine("File is empty");
             }
         }
-
         static void Main(string[] args)
         {
-            GetFile(file: out file, fileFormat: out fileFormat);
-            Timetable(file: in file, fileFormat: in fileFormat);
+                GetFile(file: out file, fileFormat: out fileFormat, day: "tomorrow");
+                Timetable(file: in file, fileFormat: in fileFormat);
             Console.ReadKey(true);
         }
     }
-    class Options
+    class Options // Additional options
     {
-        /*
-        private string[] LessonParse(string line)
+        public Options()
         {
 
         }
+
+        private string[] LessonParse(string line)
+        {
+
+            return default;
+        }
+
         public void AddLinks(string teacher, string link) 
         {
             using(DataBase database = new DataBase())
@@ -135,10 +150,9 @@ namespace Timetable
                 database.AddLinks(teacher, link);
             }
         }
-        public void AddLessons(string leasson, string date)
+        public void AddLessons(string leasson, string teacher, string date)
         {
 
         }
-        */
-    }
+    } 
 }
