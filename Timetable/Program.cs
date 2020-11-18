@@ -52,14 +52,8 @@ namespace Timetable
                 {
                     file = default;
                     fileFormat = default;
-                    //<-------------------------------->
-                    Console.WriteLine(domain);
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20%2020%20ноября%202020.xlsx?attredirects=0&d=1" == domain);
-                    Console.ResetColor();
                 }
             }
-            Console.WriteLine("http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20%2020%20ноября%202020.xlsx?attredirects=0&d=1");
             if (file == default)
             {
                 Console.WriteLine("There is no schedule for tomorrow yet, but there is one for today");
@@ -92,35 +86,29 @@ namespace Timetable
                                 if (cell.GetCell(21) == null)
                                 {
                                     if (i % 2 != 0)
-                                        couples.Add((i - 15) / 2, null);                                    
+                                        couples.Add((i - 15) / 2, null);
                                     i++;
                                 }
 
                                 if (i % 2 != 0)
                                     couples.Add((i - 15) / 2, cell.GetCell(21).StringCellValue.Replace("\n", " ").Trim());
-
                             }
-                                if (couples.Values.Any(v => !string.IsNullOrWhiteSpace(v)))
-                                {
-                                 //using (DataBase data = new DataBase())
-                                 //{
-                                 //string[] date = GetDate("tomorrow");
+                            if (couples.Values.Any(v => !string.IsNullOrWhiteSpace(v)))
+                            {
                                 foreach (KeyValuePair<int, string> _couples in couples)
-                                    {
-                                        Console.Write(_couples.Key + ". ");
-                                        Console.ForegroundColor = ConsoleColor.Cyan;
-                                        Console.WriteLine(_couples.Value);
-                                        Console.ResetColor();
-                                    }
-                                    //}
-                                }
-                                else
                                 {
-                                    Console.ForegroundColor = ConsoleColor.Green;
-                                    Console.WriteLine("\n      День\n Самостоятельной\n     Работы");
+                                    Console.Write(_couples.Key + ". ");
+                                    Console.ForegroundColor = ConsoleColor.Cyan;
+                                    Console.WriteLine(_couples.Value);
                                     Console.ResetColor();
                                 }
-                            
+                            }
+                            else
+                            {
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("\n      День\n Самостоятельной\n     Работы");
+                                Console.ResetColor();
+                            }
                         }
                     }
                     else
