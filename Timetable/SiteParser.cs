@@ -6,5 +6,6 @@ namespace Timetable
 {
     class SiteParser
     {
+
     }
 }

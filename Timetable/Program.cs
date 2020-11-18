@@ -52,14 +52,8 @@ namespace Timetable
                 {
                     file = default;
                     fileFormat = default;
-                    //<-------------------------------->
-                    Console.WriteLine(domain);
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20%2020%20ноября%202020.xlsx?attredirects=0&d=1" == domain);
-                    Console.ResetColor();
                 }
             }
-            Console.WriteLine("http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20%2020%20ноября%202020.xlsx?attredirects=0&d=1");
             if (file == default)
             {
                 Console.WriteLine("There is no schedule for tomorrow yet, but there is one for today");
