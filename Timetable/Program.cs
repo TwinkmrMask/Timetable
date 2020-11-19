@@ -145,29 +145,4 @@ namespace Timetable
             Console.ReadKey(true);
         }
     }
-    class Options // Additional options
-    {
-        public Options()
-        {
-
-        }
-
-        private string[] LessonParse(string line)
-        {
-
-            return default;
-        }
-
-        public void AddLinks(string teacher, string link)
-        {
-            using (DataBase database = new DataBase())
-            {
-                database.AddLinks(teacher, link);
-            }
-        }
-        public void AddLessons(string leasson, string teacher, string date)
-        {
-
-        }
-    }
 }
