@@ -18,17 +18,17 @@ namespace Timetable
         private static Dictionary<int, string> couples = new Dictionary<int, string>();
         static string[] GetDate(dynamic date)
         {
-            day = DateTime.Today.ToString("d.MM.yyyy").Split('.');
-
             var ru = CultureInfo.GetCultureInfo("ru-RU");
-
+            day = DateTime.Today.ToString("d.MM.yyyy").Split('.');
+            day[1] = ru.DateTimeFormat.MonthGenitiveNames[int.Parse(day[1]) - 1];
+            Console.WriteLine($"{day[0]} {day[1]} {day[2]}");
+            if (date == "today")
+                return day;
             if (date == "tomorrow")
-                day[0] = (int.Parse(day[0]) + 1).ToString(); 
+                day[0] = (int.Parse(day[0]) + 1).ToString();
             else
                 day = date.Split('.');
 
-            day[1] = ru.DateTimeFormat.MonthGenitiveNames[int.Parse(day[1]) - 1];
-            Console.WriteLine($"Today is {day[0]}.{day[1]}.{day[2]}");
             return day;
 
         }
@@ -52,12 +52,18 @@ namespace Timetable
                 {
                     file = default;
                     fileFormat = default;
+                    //<-------------------------------->
+                    Console.WriteLine(domain);
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine("http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20%2020%20ноября%202020.xlsx?attredirects=0&d=1" == domain);
+                    Console.ResetColor();
                 }
-                if (file == default)
-                {
-                    Console.WriteLine("There is no schedule for tomorrow yet, but there is one for today");
-                    GetFile(out file, out fileFormat, "today");
-                }
+            }
+            Console.WriteLine("http://www.mgkit.ru/studentu/raspisanie-zanatij/РАСПИСАНИЕ%20%2020%20ноября%202020.xlsx?attredirects=0&d=1");
+            if (file == default)
+            {
+                Console.WriteLine("There is no schedule for tomorrow yet, but there is one for today");
+                GetFile(out file, out fileFormat, "today");
             }
         }
         static void Timetable(in byte[] file, in string fileFormat)
@@ -82,30 +88,39 @@ namespace Timetable
                             for (int i = 16; i < 16 + 14; i++)
                             {
                                 var cell = sheet.GetRow(i);
-                                if (i % 2 != 0)
-                                    couples.Add((i - 15) / 2, cell.GetCell(21).ToString().Replace("\n", " ").Trim());
-                            }
 
-                            if (couples.Values.Any(v => !string.IsNullOrWhiteSpace(v)))
-                            {
-                                using (DataBase data = new DataBase())
+                                if (cell.GetCell(21) == null)
                                 {
-                                    string[] date = GetDate("tomorrow");
-                                    foreach (KeyValuePair<int, string> _couples in couples)
+                                    if (i % 2 != 0)
+                                        couples.Add((i - 15) / 2, null);                                    
+                                    i++;
+                                }
+
+                                if (i % 2 != 0)
+                                    couples.Add((i - 15) / 2, cell.GetCell(21).StringCellValue.Replace("\n", " ").Trim());
+
+                            }
+                                if (couples.Values.Any(v => !string.IsNullOrWhiteSpace(v)))
+                                {
+                                 //using (DataBase data = new DataBase())
+                                 //{
+                                 //string[] date = GetDate("tomorrow");
+                                foreach (KeyValuePair<int, string> _couples in couples)
                                     {
                                         Console.Write(_couples.Key + ". ");
                                         Console.ForegroundColor = ConsoleColor.Cyan;
                                         Console.WriteLine(_couples.Value);
                                         Console.ResetColor();
                                     }
+                                    //}
                                 }
-                            }
-                            else
-                            {
-                                Console.ForegroundColor = ConsoleColor.Green;
-                                Console.WriteLine("\n      День\n Самостоятельной\n     Работы");
-                                Console.ResetColor();
-                            }
+                                else
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Green;
+                                    Console.WriteLine("\n      День\n Самостоятельной\n     Работы");
+                                    Console.ResetColor();
+                                }
+                            
                         }
                     }
                     else
@@ -125,8 +140,8 @@ namespace Timetable
         }
         static void Main(string[] args)
         {
-                GetFile(file: out file, fileFormat: out fileFormat, day: "tomorrow");
-                Timetable(file: in file, fileFormat: in fileFormat);
+            GetFile(file: out file, fileFormat: out fileFormat, day: "tomorrow");
+            Timetable(file: in file, fileFormat: in fileFormat);
             Console.ReadKey(true);
         }
     }
@@ -143,9 +158,9 @@ namespace Timetable
             return default;
         }
 
-        public void AddLinks(string teacher, string link) 
+        public void AddLinks(string teacher, string link)
         {
-            using(DataBase database = new DataBase())
+            using (DataBase database = new DataBase())
             {
                 database.AddLinks(teacher, link);
             }
@@ -154,5 +169,5 @@ namespace Timetable
         {
 
         }
-    } 
+    }
 }
